@@ -1,12 +1,13 @@
 package com.jd.xya.shirodemo.security;
 
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.AuthenticationInfo;
-import org.apache.shiro.authc.AuthenticationToken;
+import org.apache.shiro.authc.*;
 import org.apache.shiro.authz.AuthorizationInfo;
-import org.apache.shiro.crypto.hash.DefaultHashService;
+import org.apache.shiro.crypto.SecureRandomNumberGenerator;
+import org.apache.shiro.crypto.hash.Md5Hash;
+import org.apache.shiro.crypto.hash.SimpleHash;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
+import org.apache.shiro.util.ByteSource;
 
 /**
  * Created by Administrator on 2017/5/31 0031.
@@ -32,9 +33,20 @@ public class MyShiroRealm  extends AuthorizingRealm {
      */
     @Override
     protected AuthenticationInfo doGetAuthenticationInfo(AuthenticationToken authenticationToken) throws AuthenticationException {
-        //使用散列算法服务
-        DefaultHashService hashService = new DefaultHashService();
-        
-        return null;
+        String algorithmName = "md5";
+
+        UsernamePasswordToken usernamePasswordToken = (UsernamePasswordToken) authenticationToken;
+        //取得用户名
+        String username = (String) usernamePasswordToken.getPrincipal();
+
+        //用户名做盐
+        String userNameSalt = username;
+        int hashIterations = 2 ; //加密次数
+
+        SimpleHash hash = new SimpleHash(algorithmName, usernamePasswordToken.getPassword(), userNameSalt, hashIterations);
+        //加密后密码
+        String encodedPassword = hash.toHex();
+        SimpleAuthenticationInfo simpleAuthenticationInfo =  new SimpleAuthenticationInfo(username,encodedPassword,getName());
+        return simpleAuthenticationInfo;
     }
 }
